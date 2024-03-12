@@ -977,7 +977,8 @@ class VolumeImageViewer {
     const view = new View({
       center: getCenter(this[_pyramid].extent),
       projection: this[_projection],
-      resolutions: mapViewResolutions,
+      // resolutions: mapViewResolutions,
+      constrainResolution: true,
       rotation: this[_rotation],
       constrainOnlyCenter: false,
       smoothResolutionConstraint: true,
@@ -1199,6 +1200,7 @@ class VolumeImageViewer {
         hasLoader: false
       }
 
+      // https://github.com/cytomine/Cytomine-Web-UI/blob/main-ce/src/vuelayers-suppl/zoomify-source/source.vue
       const source = new DataTileSource({
         tileGrid: this[_tileGrid],
         projection: this[_projection],
@@ -1263,8 +1265,13 @@ class VolumeImageViewer {
           projection: this[_projection],
           rotation: this[_rotation],
           constrainOnlyCenter: true,
-          resolutions: [this[_tileGrid].getResolution(0)],
-          extent: center.concat(center),
+          constrainResolution: true,
+
+          // resolutions: [this[_tileGrid].getResolution(0)],
+          // maxZoom: this[_tileGrid].getResolutions(0).length,
+          // extent: center.concat(center),
+
+          extent: this[_pyramid].extent,
           showFullExtent: true
         }),
         layers: overviewLayers,
@@ -1317,18 +1324,39 @@ class VolumeImageViewer {
           constrainOnlyCenter: true,
           minResolution: resolution,
           maxResolution: resolution,
-          extent: center.concat(center),
+          // extent: center.concat(center),
+          extent: this[_pyramid].extent,
           showFullExtent: true
         })
         const map = this[_overviewMap].getOverviewMap()
+        map.on("singleclick", (event) => {        
+          const feature = new Feature(new Point(event.coordinate));
+          // solution 1
+          // this[_map].getView().setCenter(getCenter(feature.getGeometry().getExtent()));
+
+          // solution 2
+          var zoom_now = this[_map].getView().getZoom();
+          this[_map].getView().fit(
+            feature.getGeometry().getExtent(),
+              {
+                size: this[_map].getSize(),
+                duration: 500,
+                nearest: true,
+                maxZoom: zoom_now,
+              }
+            );
+        });
 
         const overviewElement = this[_overviewMap].element
         const overviewmapElement = Object.values(overviewElement.children).find(
           c => c.className === 'ol-overviewmap-map'
         )
         // TODO: color "ol-overviewmap-map-box" using primary color
-        overviewmapElement.style.width = `${width}px`
-        overviewmapElement.style.height = `${height}px`
+        // overviewmapElement.style.width = `${width}px`
+        // overviewmapElement.style.height = `${height}px`
+        overviewmapElement.style.width = `30vh`
+        overviewmapElement.style.height = `30vh`
+
         map.updateSize()
         map.setView(overviewView)
         this[_map].removeControl(this[_overviewMap])
