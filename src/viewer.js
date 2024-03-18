@@ -986,6 +986,17 @@ class VolumeImageViewer {
       extent: this[_pyramid].extent
     })
 
+    // CALC: zoom max
+    const INCREASING_ZOOM = 5;
+    var count_zoom = 0;
+    while (Math.pow(2, count_zoom) < mapViewResolutions[0]) {
+      count_zoom++;
+    }
+    count_zoom += 1;
+    console.log("Count zoom: " + count_zoom );
+    var max_zoom_calc = count_zoom + INCREASING_ZOOM;
+    view.setMaxZoom(max_zoom_calc);
+
     const layers = []
     const overviewLayers = []
     this[_opticalPaths] = {}
@@ -1200,7 +1211,6 @@ class VolumeImageViewer {
         hasLoader: false
       }
 
-      // https://github.com/cytomine/Cytomine-Web-UI/blob/main-ce/src/vuelayers-suppl/zoomify-source/source.vue
       const source = new DataTileSource({
         tileGrid: this[_tileGrid],
         projection: this[_projection],
