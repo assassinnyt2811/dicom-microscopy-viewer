@@ -980,7 +980,7 @@ class VolumeImageViewer {
       // resolutions: mapViewResolutions,
       constrainResolution: true,
       rotation: this[_rotation],
-      constrainOnlyCenter: false,
+      constrainOnlyCenter: true,
       smoothResolutionConstraint: true,
       showFullExtent: true,
       extent: this[_pyramid].extent
