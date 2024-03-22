@@ -1274,13 +1274,8 @@ class VolumeImageViewer {
         view: new View({
           projection: this[_projection],
           rotation: this[_rotation],
-          constrainOnlyCenter: true,
           constrainResolution: true,
-
-          // resolutions: [this[_tileGrid].getResolution(0)],
-          // maxZoom: this[_tileGrid].getResolutions(0).length,
-          // extent: center.concat(center),
-
+          smoothExtentConstraint: false,
           extent: this[_pyramid].extent,
           showFullExtent: true
         }),
@@ -1294,47 +1289,67 @@ class VolumeImageViewer {
         const isRotated = !(
           Math.abs(degrees - 180) < 0.01 || Math.abs(degrees - 0) < 0.01
         )
-        const viewport = this[_map].getViewport()
-        const viewportHeight = viewport.clientHeight
-        const viewportWidth = viewport.clientWidth
-        const viewportHeightFraction = 0.45
-        const viewportWidthFraction = 0.25
-        const targetHeight = viewportHeight * viewportHeightFraction
-        const targetWidth = viewportWidth * viewportWidthFraction
+        // const viewport = this[_map].getViewport()
+        // const viewportHeight = viewport.clientHeight
+        // const viewportWidth = viewport.clientWidth
+        // const viewportHeightFraction = 0.45
+        // const viewportWidthFraction = 0.25
+        // const targetHeight = viewportHeight * viewportHeightFraction
+        // const targetWidth = viewportWidth * viewportWidthFraction
 
-        const extent = this[_projection].getExtent()
-        let height
-        let width
-        let resolution
-        if (isRotated) {
-          if (targetWidth > targetHeight) {
-            height = targetHeight
-            width = (height * getHeight(extent)) / getWidth(extent)
-            resolution = getWidth(extent) / height
-          } else {
-            width = targetWidth
-            height = (width * getWidth(extent)) / getHeight(extent)
-            resolution = getHeight(extent) / width
-          }
+        // const extent = this[_projection].getExtent()
+        // let height
+        // let width
+        // let resolution
+        // if (isRotated) {
+        //   if (targetWidth > targetHeight) {
+        //     height = targetHeight
+        //     width = (height * getHeight(extent)) / getWidth(extent)
+        //     resolution = getWidth(extent) / height
+        //   } else {
+        //     width = targetWidth
+        //     height = (width * getWidth(extent)) / getHeight(extent)
+        //     resolution = getHeight(extent) / width
+        //   }
+        // } else {
+        //   if (targetHeight > targetWidth) {
+        //     width = targetWidth
+        //     height = (width * getHeight(extent)) / getWidth(extent)
+        //     resolution = getWidth(extent) / width
+        //   } else {
+        //     height = targetHeight
+        //     width = (height * getWidth(extent)) / getHeight(extent)
+        //     resolution = getHeight(extent) / height
+        //   }
+        // }
+        // const center = getCenter(extent)
+
+        const containerWidth = 174; // Fix width using 180
+        const containerHeight = 114; // Fix height using 120
+
+        const extent = this[_projection].getExtent();
+        const extentWidth = getWidth(extent);
+        const extentHeight = getHeight(extent);
+        const aspectRatioExtent = extentWidth / extentHeight;
+
+        const aspectRatioTarget = containerWidth / containerHeight;
+        let resolution;
+        // Adjust resolution based on comparing aspect ratios
+        if (aspectRatioExtent > aspectRatioTarget) {
+          // Map is wider than the target; adjust resolution based on width
+          resolution = extentWidth / containerWidth;
         } else {
-          if (targetHeight > targetWidth) {
-            width = targetWidth
-            height = (width * getHeight(extent)) / getWidth(extent)
-            resolution = getWidth(extent) / width
-          } else {
-            height = targetHeight
-            width = (height * getWidth(extent)) / getHeight(extent)
-            resolution = getHeight(extent) / height
-          }
+          // Map is taller than the target or has the same aspect ratio; adjust resolution based on height
+          resolution = extentHeight / containerHeight;
         }
-        const center = getCenter(extent)
+
         const overviewView = new View({
           projection: this[_projection],
           rotation: this[_rotation],
-          constrainOnlyCenter: true,
+          constrainResolution: true,
           minResolution: resolution,
           maxResolution: resolution,
-          // extent: center.concat(center),
+          smoothExtentConstraint: false,
           extent: this[_pyramid].extent,
           showFullExtent: true
         })
@@ -1364,8 +1379,14 @@ class VolumeImageViewer {
         // TODO: color "ol-overviewmap-map-box" using primary color
         // overviewmapElement.style.width = `${width}px`
         // overviewmapElement.style.height = `${height}px`
-        overviewmapElement.style.width = `30vh`
-        overviewmapElement.style.height = `30vh`
+        overviewmapElement.style.width = `180px`
+        overviewmapElement.style.height = `120px`
+
+        // change background overview map
+        const overviewViewPort = Object.values(overviewmapElement.children).find(
+          c => c.className === 'ol-viewport'
+        )
+        overviewViewPort.style.backgroundColor = "black";
 
         map.updateSize()
         map.setView(overviewView)
