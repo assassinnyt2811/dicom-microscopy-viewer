@@ -40,7 +40,10 @@ import { getCenter, getHeight, getWidth } from 'ol/extent'
 import { defaults as defaultInteractions } from 'ol/interaction'
 import dcmjs from 'dcmjs'
 import _ from 'lodash'
-
+import {
+  Circle as CircleStyle,
+  Text,
+} from 'ol/style.js';
 import {
   AnnotationGroup,
   _fetchGraphicData,
@@ -264,6 +267,24 @@ function _getOpenLayersStyle (styleOptions) {
       const icon = new Icon(image.icon)
       style.setImage(icon)
     }
+  }
+
+  if ('text' in styleOptions) {
+    const text = new Text({
+      font: styleOptions.text.font,
+      textAlign: styleOptions.text.textAlign,
+      justify: styleOptions.text.justify,
+      text: styleOptions.text.text,
+      fill: new Fill(styleOptions.text.fill),
+      backgroundFill: new Fill(styleOptions.text.backgroundFill),
+      padding: styleOptions.text.padding,
+      placement: styleOptions.text.placement,
+      offsetX: styleOptions.text.offsetX,
+      offsetY: styleOptions.text.offsetY,
+      textBaseline: styleOptions.text.textBaseline,
+      overflow: styleOptions.text.overflow,
+    });
+    style.setText(text)
   }
 
   return style
@@ -980,7 +1001,7 @@ class VolumeImageViewer {
       // resolutions: mapViewResolutions,
       constrainResolution: true,
       rotation: this[_rotation],
-      constrainOnlyCenter: true,
+      constrainOnlyCenter: false,
       smoothResolutionConstraint: true,
       showFullExtent: true,
       extent: this[_pyramid].extent
@@ -1338,7 +1359,7 @@ class VolumeImageViewer {
         if (aspectRatioExtent > aspectRatioTarget) {
           // Map is wider than the target; adjust resolution based on width
           resolution = extentWidth / containerWidth;
-        } else {
+          } else {
           // Map is taller than the target or has the same aspect ratio; adjust resolution based on height
           resolution = extentHeight / containerHeight;
         }
@@ -2842,6 +2863,26 @@ class VolumeImageViewer {
       this[_pyramid].metadata,
       this[_affine]
     )
+  }
+
+  
+  viewROI(uid) {
+    // Avoid insertion of duplicates
+    let exists = false
+    for (let i = 0; i < this[_features].getLength(); i++) {
+      const feature = this[_features].item(i)
+      if (feature.getId() === uid) {
+        exists = true
+        break
+      }
+    }
+    if (!exists) {
+      console.warn(`ROI "${uid}" is not exists`)
+    }
+    const feature = this[_drawingSource].getFeatureById(uid);
+    const geometry = feature.getGeometry();
+    const extent = geometry.getExtent();
+    this[_map].getView().fit(extent, { duration: 600 });
   }
 
   /**
